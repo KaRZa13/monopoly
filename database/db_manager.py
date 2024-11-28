@@ -37,13 +37,13 @@ class DBManager:
 # GESTION DE LA TABLE NEIGHBORHOOD
 
     @classmethod
-    def create_neighborhood(cls):
+    def create_neighborhood_table(cls):
         cls.execute("""
             CREATE TABLE IF NOT EXISTS neighborhood (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 color VARCHAR(255),
                 house_price INT
-            )
+            );
         """)
 
     @classmethod
@@ -87,3 +87,56 @@ class DBManager:
                 """, fetchall=True)
     
 # GESTION DE LA TABLE PROPERTY
+
+    @classmethod
+    def create_property_table(cls):
+        cls.execute("""
+            CREATE TABLE IF NOT EXISTS properties (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                type VARCHAR(50),
+                idNeighborhood INT,
+                name VARCHAR(255),
+                price INT,
+                rent TEXT,
+                FOREIGN KEY (idNeighborhood) REFERENCES neighborhood(id)
+            );
+        """)
+
+    @classmethod
+    def drop_property_table(cls):
+        cls.execute("DROP TABLE IF EXISTS property;")
+    
+    @classmethod
+    def add_property(cls, prop):
+        if prop.id is None:
+            cls.execute("""
+                INSERT INTO property (type, idNeighborhood, name, price, rent)
+                VALUES (%s, %s, %s, %s, %s);
+            """, (prop.type, prop.idNeighborhood, prop.name, prop.price, ",".join(map(str, prop.rent))))
+        else:
+            cls.execute("""
+                UPDATE property
+                SET type = %s, idNeighborhood = %s, name = %s, price = %s, rent = %s
+                WHERE id = %s;
+            """, (prop.type, prop.idNeighborhood, prop.name, prop.price, ",".join(map(str, prop.rent)), prop.id))
+
+    @classmethod
+    def get_all_properties(cls):
+        return cls.execute("""
+                    SELECT id, type, idNeighborhood, name, price, rent 
+                    FROM properties;
+                """, fetch_all=True)
+
+
+if __name__ == "__main__":
+    DBManager.create_neighborhood_table()
+    DBManager.create_property_table()
+
+    from models.properties import Neighborhood, Property, Terrain
+    n1 = Neighborhood('bleu', 200)
+    rp = Terrain('Rue de la Paix', [1, 2, 3, 4, 5], 200)
+    DBManager.add_neighborhood(n1)
+    DBManager.add_property(rp)
+
+    print(DBManager.get_all_properties())
+    print(DBManager.get_all_neighborhood())
