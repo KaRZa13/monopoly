@@ -4,12 +4,20 @@ class DBManager:
     _connection = None
 
     @classmethod
+    def create_database(cls):
+        cls.execute("""
+            CREATE DATABASE IF NOT EXISTS monopoly;
+            USE monopoly;
+        """)
+
+
+    @classmethod
     def connect(cls):
         if cls._connection is None:
             cls._connection = mysql.connector.connect(
                 host = 'localhost',
                 user = 'root',
-                password = 'root',
+                password = '',
                 database = 'monopoly'
             )
         return cls._connection
@@ -78,7 +86,6 @@ class DBManager:
                         AND (%s IS NULL OR color like %s);
                     """, (id, id, color, color), fetch_one=True)
 
-
     @classmethod
     def get_all_neighborhood(cls):
         return cls.execute("""
@@ -127,14 +134,54 @@ class DBManager:
                     FROM properties;
                 """, fetch_all=True)
 
+# GESTION DU JOUEUR
+
+    @classmethod
+    def create_player_table(cls):
+        cls.execute("""
+            CREATE TABLE IF NOT EXISTS player (
+                idPlayer INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(50),
+                balance INT,
+                color VARCHAR(25),
+                position INT
+            );
+        """,)
+
+    @classmethod
+    def drop_player_table(cls):
+        cls.execute("DROP TABLE IF EXISTS player;")
+
+    @classmethod
+    def add_player(cls, player):
+        if player.id is None:
+            cls.execute("""
+                INSERT INTO player (idPlayer, name, balence, color, position)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (player.id, player.name, player.balence, player.color, player.position))
+
+    @classmethod
+    def get_player(cls, id=None, name=None):
+        return cls.execute("""
+                    SELECT idPlayer, name, balance, color, position
+                    FROM player
+                    WHERE (%s IS NULL OR is %s)
+                        AND %s IS NULL OR name like %s
+                """, (id, id, name, name))
+
 
 if __name__ == "__main__":
     DBManager.create_neighborhood_table()
     DBManager.create_property_table()
 
-    from models.properties import Neighborhood, Property, Terrain
+    from ..models.properties import Neighborhood, Terrain, Property
+    from ..models.player import Player
+    j1 = Player('Raf')
+    print(j1)
     n1 = Neighborhood('bleu', 200)
+    print(n1)
     rp = Terrain('Rue de la Paix', [1, 2, 3, 4, 5], 200)
+    print(rp)
     DBManager.add_neighborhood(n1)
     DBManager.add_property(rp)
 
