@@ -1,13 +1,6 @@
 class Player:
     def __init__(self, balance):
         self.balance = balance
-        
-
-    def move(self, steps):
-        pass
-
-    def buy_property(self, property):
-        pass
 
     def pay(self, amount):
         self.balance -= amount
@@ -34,6 +27,17 @@ class HumanPlayer(Player):
         self.position = 0
         self.pawn = None
         self.properties = []
+
+    def can_afford(self, property_price):
+        return self.balance >= property_price
+
+
+    def buy_property(self, property_):
+        if self.can_afford(property_.price):
+            self.balance -= property_.price
+            self.properties.append(property_)
+            return True
+        return False
 
 class Bank(Player):
     def __init__(self, balance):
